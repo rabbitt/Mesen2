@@ -57,6 +57,7 @@ jobs:
 
 
   linux:
+    if: false  # Disabled for fork; re-enable before upstreaming
     strategy:
       matrix:
         compiler: [gcc, clang, clang_aot]
@@ -111,6 +112,7 @@ jobs:
           path: bin/linux-${{ matrix.platform.path }}/Release/linux-${{ matrix.platform.path }}/publish/Mesen
 
   appimage:
+    if: false  # Disabled for fork; re-enable before upstreaming
     strategy:
       matrix:
         compiler: [clang_appimage]
@@ -153,6 +155,7 @@ jobs:
 
 
   macos:
+    if: false  # Disabled for fork; re-enable before upstreaming
     strategy:
       matrix:
         compiler: [clang, clang_aot]
