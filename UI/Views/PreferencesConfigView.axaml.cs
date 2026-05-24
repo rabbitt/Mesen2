@@ -20,6 +20,9 @@ namespace Mesen.Views
 		public PreferencesConfigView()
 		{
 			InitializeComponent();
+
+			ComboBox cboUiScale = this.GetControl<ComboBox>("cboUiScale");
+			cboUiScale.ItemsSource = new double[] { 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0 };
 		}
 
 		private void InitializeComponent()

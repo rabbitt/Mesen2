@@ -172,6 +172,11 @@
 					</c:OptionSection>
 
 					<c:OptionSection Header="{l:Translate lblFontSettings}">
+						<StackPanel Orientation="Horizontal" Margin="0 0 0 5">
+							<TextBlock Text="{l:Translate lblUiScale}" VerticalAlignment="Center" />
+							<ComboBox x:Name="cboUiScale" Width="70" Margin="5 0 0 0" SelectedItem="{Binding Config.UiScale}" />
+							<TextBlock Text="x" VerticalAlignment="Center" Margin="3 0 0 0" />
+						</StackPanel>
 						<Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto" Margin="0 0 0 5">
 							<TextBlock Text="{l:Translate lblFontAntialiasing}" />
 							<StackPanel Orientation="Horizontal" Grid.Column="1" >

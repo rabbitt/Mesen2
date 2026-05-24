@@ -23,7 +23,10 @@ using System.Collections.Generic;
 using Mesen.Controls;
 using Mesen.Localization;
 using System.Diagnostics;
+using Avalonia.Media;
 using Avalonia.VisualTree;
+using ReactiveUI;
+using System.Reactive.Linq;
 using System.Text;
 
 namespace Mesen.Windows
@@ -59,6 +62,10 @@ namespace Mesen.Windows
 		private Size _originalSize;
 		private PixelPoint _originalPos;
 		private WindowState _prevWindowState;
+
+		private LayoutTransformControl _uiScaleContainer = null!;
+		private double _currentUiScale = 1.0;
+		private IDisposable? _uiScaleSubscription;
 
 		//Used to suppress key-repeat keyup events on Linux
 		private Dictionary<Key, IDisposable> _pendingKeyUpEvents = new();
@@ -107,6 +114,13 @@ namespace Mesen.Windows
 			_audioPlayer = this.GetControl<ContentControl>("AudioPlayer");
 			_mainMenu = this.GetControl<MainMenuView>("MainMenu");
 			ConfigManager.Config.MainWindow.LoadWindowSettings(this);
+
+			_uiScaleContainer = this.GetControl<LayoutTransformControl>("UiScaleContainer");
+			InitUiScale();
+			_uiScaleSubscription = ConfigManager.Config.Preferences
+				.WhenAnyValue(x => x.UiScale)
+				.Skip(1)
+				.Subscribe(scale => Dispatcher.UIThread.Post(() => ApplyUiScaleChange(scale)));
 
 			Console.CancelKeyPress += Console_CancelKeyPress;
 
@@ -183,7 +197,41 @@ namespace Mesen.Windows
 		protected override void OnClosed(EventArgs e)
 		{
 			base.OnClosed(e);
+			_uiScaleSubscription?.Dispose();
 			_mouseManager?.Dispose();
+		}
+
+		private void InitUiScale()
+		{
+			_currentUiScale = ConfigManager.Config.Preferences.UiScale;
+			if(_currentUiScale == 1.0) {
+				return;
+			}
+
+			_uiScaleContainer.LayoutTransform = new ScaleTransform(_currentUiScale, _currentUiScale);
+			MinWidth = 160 * _currentUiScale;
+			MinHeight = 144 * _currentUiScale;
+
+			// If window size was not restored from config, scale the AXAML defaults
+			if(ConfigManager.Config.MainWindow.WindowSize.Width == 0) {
+				Width = 512 * _currentUiScale;
+				Height = 505 * _currentUiScale;
+			}
+		}
+
+		private void ApplyUiScaleChange(double newScale)
+		{
+			if(newScale == _currentUiScale) {
+				return;
+			}
+
+			double ratio = newScale / _currentUiScale;
+			_uiScaleContainer.LayoutTransform = newScale == 1.0 ? null : new ScaleTransform(newScale, newScale);
+			Width = Math.Round(Width * ratio);
+			Height = Math.Round(Height * ratio);
+			MinWidth = 160 * newScale;
+			MinHeight = 144 * newScale;
+			_currentUiScale = newScale;
 		}
 
 		private void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)

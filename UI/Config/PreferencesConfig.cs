@@ -69,6 +69,7 @@ namespace Mesen.Config
 		[Reactive] public HudDisplaySize HudSize { get; set; } = HudDisplaySize.Fixed;
 		[Reactive] public GameSelectionMode GameSelectionScreenMode { get; set; } = GameSelectionMode.ResumeState;
 
+		[Reactive] public double UiScale { get; set; } = 1.0;
 		[Reactive] public FontAntialiasing FontAntialiasing { get; set; } = FontAntialiasing.SubPixelAntialias;
 		[Reactive] public FontConfig MesenFont { get; set; } = new FontConfig() { FontFamily = "Microsoft Sans Serif", FontSize = 11 };
 		[Reactive] public FontConfig MesenMenuFont { get; set; } = new FontConfig() { FontFamily = "Segoe UI", FontSize = 12 };
