@@ -751,6 +751,7 @@
 			<Control ID="chkShowVsConfigOnLoad">Show game configuration dialog when loading VS System games</Control>
 
 			<Control ID="lblFontSettings">Font Settings</Control>
+			<Control ID="lblUiScale">UI Scale:</Control>
 			<Control ID="lblFontAntialiasing">Font anti-aliasing:</Control>
 			<Control ID="lblRegularFont">Default font:</Control>
 			<Control ID="lblMenuFont">Menu font:</Control>
