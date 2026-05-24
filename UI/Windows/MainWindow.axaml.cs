@@ -63,7 +63,6 @@ namespace Mesen.Windows
 		private PixelPoint _originalPos;
 		private WindowState _prevWindowState;
 
-		private LayoutTransformControl _uiScaleContainer = null!;
 		private double _currentUiScale = 1.0;
 		private IDisposable? _uiScaleSubscription;
 
@@ -115,7 +114,6 @@ namespace Mesen.Windows
 			_mainMenu = this.GetControl<MainMenuView>("MainMenu");
 			ConfigManager.Config.MainWindow.LoadWindowSettings(this);
 
-			_uiScaleContainer = this.GetControl<LayoutTransformControl>("UiScaleContainer");
 			InitUiScale();
 			_uiScaleSubscription = ConfigManager.Config.Preferences
 				.WhenAnyValue(x => x.UiScale)
@@ -204,19 +202,12 @@ namespace Mesen.Windows
 		private void InitUiScale()
 		{
 			_currentUiScale = ConfigManager.Config.Preferences.UiScale;
+			ConfigManager.UiScaleFactor = _currentUiScale;
 			if(_currentUiScale == 1.0) {
 				return;
 			}
-
-			_uiScaleContainer.LayoutTransform = new ScaleTransform(_currentUiScale, _currentUiScale);
-			MinWidth = 160 * _currentUiScale;
-			MinHeight = 144 * _currentUiScale;
-
-			// If window size was not restored from config, scale the AXAML defaults
-			if(ConfigManager.Config.MainWindow.WindowSize.Width == 0) {
-				Width = 512 * _currentUiScale;
-				Height = 505 * _currentUiScale;
-			}
+			Application.Current!.Resources["MesenMenuBarHeight"] = 25.0 * _currentUiScale;
+			Application.Current!.Resources["MesenMenuItemMinHeight"] = 22.0 * _currentUiScale;
 		}
 
 		private void ApplyUiScaleChange(double newScale)
@@ -224,14 +215,11 @@ namespace Mesen.Windows
 			if(newScale == _currentUiScale) {
 				return;
 			}
-
-			double ratio = newScale / _currentUiScale;
-			_uiScaleContainer.LayoutTransform = newScale == 1.0 ? null : new ScaleTransform(newScale, newScale);
-			Width = Math.Round(Width * ratio);
-			Height = Math.Round(Height * ratio);
-			MinWidth = 160 * newScale;
-			MinHeight = 144 * newScale;
 			_currentUiScale = newScale;
+			ConfigManager.UiScaleFactor = newScale;
+			ConfigManager.Config.Preferences.ApplyFontOptions();
+			Application.Current!.Resources["MesenMenuBarHeight"] = 25.0 * newScale;
+			Application.Current!.Resources["MesenMenuItemMinHeight"] = 22.0 * newScale;
 		}
 
 		private void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
@@ -501,15 +489,14 @@ namespace Mesen.Windows
 			FrameInfo baseScreenSize = EmuApi.GetBaseScreenSize();
 			if(WindowState == WindowState.Normal) {
 				double menuHeight = ConfigManager.Config.Preferences.AutoHideMenu ? 0 : _mainMenu.Bounds.Height;
-				// ClientSize is in window logical pixels; divide by _currentUiScale to get LTC child-space dimensions
-				double height = (ClientSize.Height / _currentUiScale) - menuHeight - _audioPlayer.Bounds.Height;
+				double height = ClientSize.Height - menuHeight - _audioPlayer.Bounds.Height;
 				if(baseScreenSize.Width == _prevScreenSize.Height && baseScreenSize.Height == _prevScreenSize.Width) {
 					//Rotation, swap sizes without changing scale
-					double xScale = (ClientSize.Width / _currentUiScale) * dpiScale / _prevScreenSize.Width;
+					double xScale = ClientSize.Width * dpiScale / _prevScreenSize.Width;
 					double yScale = height * dpiScale / _prevScreenSize.Height;
 					SetScale(Math.Min(Math.Round(xScale), Math.Round(yScale)));
 				} else {
-					double xScale = (ClientSize.Width / _currentUiScale) * dpiScale / baseScreenSize.Width;
+					double xScale = ClientSize.Width * dpiScale / baseScreenSize.Width;
 					double yScale = height * dpiScale / baseScreenSize.Height;
 					SetScale(Math.Min(Math.Round(xScale), Math.Round(yScale)));
 				}
@@ -549,14 +536,13 @@ namespace Mesen.Windows
 				//When menu is set to auto-hide, don't count its height when calculating the window's final size
 				double menuHeight = ConfigManager.Config.Preferences.AutoHideMenu ? 0 : _mainMenu.Bounds.Height;
 
-				double width = Math.Max(160.0, Math.Round(screenSize.Height * aspectRatio * scale) / dpiScale);
-				double height = Math.Max(144.0, screenSize.Height * scale / dpiScale);
-				Width = width * _currentUiScale;
-				Height = (height + menuHeight + _audioPlayer.Bounds.Height) * _currentUiScale;
+				double width = Math.Max(MinWidth, Math.Round(screenSize.Height * aspectRatio * scale) / dpiScale);
+				double height = Math.Max(MinHeight, screenSize.Height * scale / dpiScale);
+				Width = width;
+				Height = height + menuHeight + _audioPlayer.Bounds.Height;
 				ResizeRenderer();
 			} else if(WindowState == WindowState.Maximized || WindowState == WindowState.FullScreen) {
-				double effectiveDpi = dpiScale * _currentUiScale;
-				_rendererSize = new Size(Math.Round(screenSize.Width * scale * aspectRatio) / effectiveDpi, Math.Round(screenSize.Height * scale) / effectiveDpi);
+				_rendererSize = new Size(Math.Round(screenSize.Width * scale * aspectRatio) / dpiScale, Math.Round(screenSize.Height * scale) / dpiScale);
 				ResizeRenderer();
 			}
 		}
@@ -585,16 +571,15 @@ namespace Mesen.Windows
 
 			if(ConfigManager.Config.Video.FullscreenForceIntegerScale && VisualRoot is Window wnd && (wnd.WindowState == WindowState.FullScreen || wnd.WindowState == WindowState.Maximized)) {
 				FrameInfo baseSize = EmuApi.GetBaseScreenSize();
-				double effectiveDpi = dpiScale * _currentUiScale;
-				double scale = height * effectiveDpi / baseSize.Height;
+				double scale = height * dpiScale / baseSize.Height;
 				if(scale != Math.Floor(scale)) {
-					height = baseSize.Height * Math.Max(1, Math.Floor(scale)) / effectiveDpi;
+					height = baseSize.Height * Math.Max(1, Math.Floor(scale / dpiScale));
 					width = height * aspectRatio;
 				}
 			}
 
-			uint realWidth = (uint)Math.Round(width * dpiScale * _currentUiScale);
-			uint realHeight = (uint)Math.Round(height * dpiScale * _currentUiScale);
+			uint realWidth = (uint)Math.Round(width * dpiScale);
+			uint realHeight = (uint)Math.Round(height * dpiScale);
 			EmuApi.SetRendererSize(realWidth, realHeight);
 			_model.RendererSize = new Size(realWidth, realHeight);
 

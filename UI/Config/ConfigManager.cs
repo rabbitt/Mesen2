@@ -37,6 +37,7 @@ namespace Mesen.Config
 		public static string DefaultWaveFolder { get { return Path.Combine(HomeFolder, "Wave"); } }
 
 		public static bool DisableSaveSettings { get; internal set; }
+		public static double UiScaleFactor { get; set; } = 1.0;
 
 		public static string GetConfigFile()
 		{

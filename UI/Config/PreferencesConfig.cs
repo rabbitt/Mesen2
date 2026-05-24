@@ -190,11 +190,13 @@ namespace Mesen.Config
 					Application.Current.Resources["MesenMenuFont"] = new FontFamily(menuFont);
 				}
 
-				if(Application.Current.Resources["MesenFontSize"] is double curMesenFontSize && curMesenFontSize != MesenFont.FontSize) {
-					Application.Current.Resources["MesenFontSize"] = (double)MesenFont.FontSize;
+				double scaledFontSize = MesenFont.FontSize * ConfigManager.UiScaleFactor;
+				if(Application.Current.Resources["MesenFontSize"] is double curMesenFontSize && curMesenFontSize != scaledFontSize) {
+					Application.Current.Resources["MesenFontSize"] = scaledFontSize;
 				}
-				if(Application.Current.Resources["MesenMenuFontSize"] is double curMesenMenuFontSize && curMesenMenuFontSize != MesenMenuFont.FontSize) {
-					Application.Current.Resources["MesenMenuFontSize"] = (double)MesenMenuFont.FontSize;
+				double scaledMenuFontSize = MesenMenuFont.FontSize * ConfigManager.UiScaleFactor;
+				if(Application.Current.Resources["MesenMenuFontSize"] is double curMesenMenuFontSize && curMesenMenuFontSize != scaledMenuFontSize) {
+					Application.Current.Resources["MesenMenuFontSize"] = scaledMenuFontSize;
 				}
 			}
 		}
