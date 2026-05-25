@@ -265,13 +265,12 @@
 
 	<Style Selector="TextBox">
 		<Setter Property="MinWidth" Value="30" />
-		
+
 		<Setter Property="VerticalContentAlignment" Value="Center" />
 
 		<Setter Property="Margin" Value="1" />
 		<Setter Property="Padding" Value="2 0" />
 		<Setter Property="MinHeight" Value="21" />
-		<Setter Property="Height" Value="21" />
 		<Setter Property="SelectionBrush" Value="{DynamicResource TextBoxSelectionBrush}" />
 		
 		<Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Hidden" />
